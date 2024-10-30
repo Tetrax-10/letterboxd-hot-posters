@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Letterboxd Hot Posters</title>
+        <style>
+            body {
+                background-color: rgb(32, 36, 44);
+                color: rgb(207, 207, 207);
+                font-family: "Source Sans Pro", Arial, sans-serif;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                -webkit-user-select: none;
+                user-select: none;
+                margin: 0;
+            }
+
+            #title {
+                margin-top: 0;
+            }
+
+            /* Film grid and posters */
+            #film-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            #film-grid {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 15px;
+                max-width: 85%;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            .film-item {
+                cursor: pointer;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 2px solid transparent;
+                transition: border-color 0.3s;
+                position: relative;
+            }
+            .film-item img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+            .film-item:hover {
+                border-color: rgb(76, 175, 80);
+            }
+            body:not(.mousemove) .film-item.selected.red:hover::before {
+                background-color: rgb(184, 0, 31);
+            }
+            body:not(.mousemove) .film-item.selected.red:hover {
+                border-color: rgb(184, 0, 31);
+            }
+            .film-item::before {
+                content: "✓";
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                color: white;
+                font-size: 14px;
+                background-color: rgb(76, 175, 80);
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: 0.3s ease;
+                z-index: 2;
+            }
+            .film-item.selected::before {
+                opacity: 1;
+            }
+            .film-item::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                opacity: 0;
+                transition: 0.3s ease;
+                z-index: 1;
+            }
+            .film-item.selected::after {
+                opacity: 1;
+            }
+
+            /* Buttons */
+            .submit-button,
+            .nav-button {
+                background-color: rgb(76, 175, 80);
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s ease;
+            }
+            .submit-button:hover,
+            .nav-button:hover {
+                background-color: rgb(60, 150, 65);
+            }
+            .button-container {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                max-width: 85%;
+            }
+            #top-buttons {
+                margin-bottom: 20px;
+            }
+
+            /* Page indicator */
+            #page-indicator {
+                display: flex;
+                align-items: center;
+            }
+            #total-page-number,
+            #page-number {
+                font-size: 2em;
+                color: rgb(207, 207, 207);
+                padding: 0;
+                margin: 0;
+                cursor: pointer;
+            }
+            #page-number {
+                width: 1ch;
+                border: none;
+                background-color: transparent;
+                text-align: center;
+                font-weight: bold;
+                outline: none;
+            }
+            #page-indicator,
+            #num-of-images {
+                padding: 0;
+                margin: 0;
+                align-content: center;
+            }
+
+            /* Hamburger menu */
+            #hamburger-menu {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                align-self: start;
+                z-index: 1000;
+                width: auto;
+            }
+            #overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 999;
+            }
+            #menu-icon {
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 30px;
+                height: 20px;
+            }
+            #menu-icon div {
+                width: 100%;
+                height: 4px;
+                background-color: rgb(76, 175, 80);
+                border-radius: 2px;
+                transition: 0.3s ease;
+            }
+            #menu-options {
+                position: absolute;
+                top: 35px;
+                left: 0;
+                background-color: rgb(32, 36, 44);
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
+                display: flex;
+                flex-direction: column;
+                min-width: 150px;
+                transition: opacity 0.3s ease;
+            }
+            .menu-option {
+                padding: 10px 20px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+                font-size: 16px;
+                text-wrap: nowrap;
+            }
+            .menu-option.menu-option-selected {
+                background-color: rgb(60, 150, 65);
+            }
+            .menu-option:first-child {
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+            }
+            .menu-option:last-child {
+                border-bottom-left-radius: 8px;
+                border-bottom-right-radius: 8px;
+            }
+            .menu-option:hover {
+                background-color: rgb(60, 150, 65);
+            }
+            body:has(.film-item).no-scroll {
+                position: fixed;
+                overflow-y: scroll;
+            }
+
+            /* Conditional classes */
+            .hidden {
+                display: none !important;
+            }
+            .visibility-hidden {
+                visibility: hidden !important;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="hamburger-menu">
+            <div id="menu-icon">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="hidden" id="menu-options">
+                <div class="menu-option" id="option-1">Show selected posters only</div>
+                <div class="menu-option" id="option-2">Show un-selected posters only</div>
+            </div>
+        </div>
+        <div id="overlay" class="hidden"></div>
+        <h1 id="title">Select posters that you think are hot 🔥</h1>
+        <div id="top-buttons" class="button-container hidden">
+            <button class="nav-button visibility-hidden" id="prev-button-top">Previous</button>
+            <div id="page-indicator">
+                <input type="text" pattern="[0-9]*" inputmode="numeric" id="page-number" value="1" />
+                <h1 id="total-page-number">/10 pages</h1>
+            </div>
+            <h1 id="num-of-images"></h1>
+            <button class="nav-button visibility-hidden" id="next-button-top">Next</button>
+        </div>
+        <div id="film-container">
+            <h1 id="no-posters">No Posters Available :(</h1>
+            <div id="film-grid"></div>
+        </div>
+        <div id="bottom-buttons" class="button-container hidden">
+            <button class="nav-button visibility-hidden" id="prev-button-bottom">Previous</button>
+            <button class="nav-button visibility-hidden" id="next-button-bottom">Next</button>
+        </div>
+        <button class="submit-button">Submit</button>
+
+        <!-- Image element for classification server -->
+        <img style="display: none" src="" alt="" />
+
+        <script src="dist/server.js"></script>
+    </body>
+</html>

@@ -1,0 +1,23 @@
+{
+    "name": "letterboxd-hot-posters",
+    "description": "",
+    "version": "1.0.0",
+    "author": "Tetrax-10",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "lhp": "node src/index.js",
+        "serve": "serve -p 8999",
+        "build-classify-server": "node build.js classify",
+        "build-selection-server": "node build.js manualPosterPicker"
+    },
+    "dependencies": {
+        "commander": "^12.1.0",
+        "nsfwjs": "^4.2.0",
+        "puppeteer": "^23.6.0"
+    },
+    "devDependencies": {
+        "esbuild": "^0.24.0",
+        "serve": "^14.2.4"
+    }
+}
