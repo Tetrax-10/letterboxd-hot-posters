@@ -56,6 +56,35 @@ async function downloadImage(posterUrl, filmId, outFolder) {
     })
 }
 
+async function downloadImagesInBatches(scrapedData, postersFolder, batchSize = 100) {
+    const filmIds = Object.keys(scrapedData)
+    let failedToDownload = 0
+    let loopCount = 0
+
+    for (let i = 0; i < filmIds.length; i += batchSize) {
+        const batch = filmIds.slice(i, i + batchSize)
+        const downloadPromises = batch.map(async (filmId) => {
+            if (fs.existsSync(`${postersFolder}/${filmId}.jpg`)) return
+
+            const posterUrl = generatePosterUrl(filmId, scrapedData[filmId])
+            const isSuccess = await downloadImage(posterUrl, filmId, postersFolder)
+
+            if (isSuccess) {
+                console.log(`Downloaded image: ${filmId}.jpg`)
+                loopCount += 1
+            } else {
+                failedToDownload += 1
+            }
+        })
+
+        await Promise.all(downloadPromises)
+        console.log(`Batch ${Math.floor(i / batchSize) + 1} completed`)
+    }
+
+    console.log(`\nDownloaded ${loopCount}/${filmIds.length} images`)
+    if (failedToDownload) console.log(`Failed to download ${failedToDownload} images`)
+}
+
 export default async (letterboxdPath) => {
     const outFolder = `./out/${letterboxdPath.replaceAll("/", "_")}`
 
@@ -75,26 +104,5 @@ export default async (letterboxdPath) => {
     const scrapedFileContents = fs.readFileSync(`${outFolder}/scraped_data.json`, "utf8")
     const scrapedData = JSON.parse(scrapedFileContents)
 
-    let loopCount = 0
-    let failedToDownload = 0
-    for (const filmId in scrapedData) {
-        // Skip if image already exists
-        if (fs.existsSync(`${postersFolder}/${filmId}.jpg`)) continue
-
-        const posterUrl = generatePosterUrl(filmId, scrapedData[filmId])
-
-        const isSuccess = await downloadImage(posterUrl, filmId, postersFolder)
-
-        if (isSuccess) {
-            console.log(`Downloaded image: ${filmId}.jpg`)
-        } else {
-            failedToDownload += 1
-        }
-
-        loopCount += 1
-    }
-
-    console.log(`\nDownloaded ${loopCount}/${Object.keys(scrapedData).length} images`)
-
-    if (failedToDownload) console.log(`Failed to download ${failedToDownload} images`)
+    await downloadImagesInBatches(scrapedData, postersFolder, 100)
 }
