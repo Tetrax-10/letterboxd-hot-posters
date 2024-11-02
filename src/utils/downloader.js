@@ -28,7 +28,7 @@ async function downloadImage(posterUrl, filmId, outFolder) {
         },
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         https
             .get(posterUrl, options, (response) => {
                 if (response.statusCode === 200) {
@@ -42,16 +42,16 @@ async function downloadImage(posterUrl, filmId, outFolder) {
 
                     file.on("error", (err) => {
                         console.log(`File write error ${filmId}: ${err.message}`)
-                        reject(false)
+                        resolve(false)
                     })
                 } else {
                     console.log(`Failed to download image ${filmId}. Status code: ${response.statusCode}`)
-                    reject(false)
+                    resolve(false)
                 }
             })
             .on("error", (err) => {
                 console.log(`Error downloading image ${filmId}: ${err.message}`)
-                reject(false)
+                resolve(false)
             })
     })
 }
